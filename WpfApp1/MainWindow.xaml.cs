@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.ComponentModel;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -9,10 +8,6 @@ using System.Windows.Data;
 using System.Windows.Input;
 using System.Windows.Controls;
 using System.Runtime.CompilerServices;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using OxyPlot;
 using OxyPlot.Series;
 using OxyPlot.Legends;
@@ -20,92 +15,120 @@ using ClassLibrary1;
 
 namespace WpfApp1
 {
+    //______________________________________________КЛАСС ДАННЫХ ДЛЯ ПОСТРОЕНИЯ ГРАФИКИ_______________________________________________
     public class Data
     {
         public string xTitle { get; set; }                                                          // Надпись по оси Ox
         public string yTitle { get; set; }                                                          // Надпись по оси Oy
         public double[] X { get; set; }                                                             // Значения абсцисс 
-        public List<double[]> YL { get; set; }                                                      // Значения ординат 
-
-        public List<string> legends { get; set; }                                                   // Legends 
+        public double[] Y { get; set; }
+        public double[] Splines_X { get; set; }
+        public List<double[]> Splines_Y_List { get; set; }
+        public List<string> legends { get; set; }
         public ObservableCollection<string> strList { get; set; }
 
         public Data()
         {
             strList = new ObservableCollection<string>();
             legends = new List<string>();
-            YL = new List<double[]>();
+            Splines_Y_List = new List<double[]>();
             xTitle = "x";
-            yTitle = "f(x)";
+            yTitle = "F(x)";
         }
 
-        public void AddDefaults(int nX, double[] XArray, double[] YArray)                                                             // nX - кол-во точек по оси Х
+        public void AddMeasuredData(int nX, double[] XArray, double[] YArray)                                                             // nX - кол-во точек по оси Х
         {
             try
             {
                 X = new double[nX];
-                double[] Y = new double[nX];
+                Y = new double[nX];
                 for (int i = 0; i < nX; i++)
                 {
                     X[i] = XArray[i];
                     Y[i] = YArray[i];
                 }
-                YL.Add(Y);
                 legends.Add("Измеренные данные");
-                //DataToStringList();
             }
             catch (Exception ex)
-            { MessageBox.Show("Ошибка в AddDefaults\n " + ex.Message); }
+            { MessageBox.Show("Ошибка в AddDefaults!\n " + ex.Message); }
         }
 
-        void DataToStringList()
+        public void AddSplinesData(int nx, double[] Scope, double[] YArray, bool first_der_set)
         {
-            for (int i = 0; i < YL.Count; i++)
+            try
             {
-                strList.Add(legends[i]);
-                for (int j = 0; j < X.Length; j++)
+                Splines_X = new double[nx];
+                double[] Splines_Y = new double[nx];
+                double step = (Scope[1] - Scope[0]) / (nx - 1);
+                for (int i = 0; i < nx; i++)
                 {
-                    strList.Add($"x = {X[j].ToString("F2")} Y = {YL[i][j].ToString("F4")}");
+                    Splines_X[i] = Scope[0] + step*i;
+                    Splines_Y[i] = YArray[i];
                 }
+                Splines_Y_List.Add(Splines_Y);
+                string der_set = first_der_set ? "Первый" : "Второй";
+                legends.Add("Значения сплайнов: " + der_set + " набор производных");
             }
+            catch (Exception ex)
+            { MessageBox.Show("Ошибка в AddSplinesData!\n " + ex.Message); }
         }
     }
 
+    //____________________________КЛАСС ДЛЯ ВЗАИМОДЕЙСТВИЯ С ЭЛЕМЕНТАМИ УПРАВЛЕНИЯ ГРАФИКИ WPF (OxyPlot)______________________________
     public class ChartData
     {
-        Data data;
         public PlotModel plotModel { get; private set; }
 
-        public ChartData(Data data)
+        public ChartData()
         {
-            this.data = data;
-            this.plotModel = new PlotModel { Title = "Measured Data Chart" };
-            AddSeries();
+            this.plotModel = new PlotModel { Title = "Measured Data & Splines Charts" };
         }
 
-        public void AddSeries()
+        public void AddSeries(Data data, string option)
         {
-            this.plotModel.Series.Clear();
-            for (int i = 0; i < data.YL.Count; i++)
+            Legend legend = new Legend();
+            OxyColor color;
+            if(option == "MD")
             {
-                OxyColor color = OxyColors.Blue;
-                //(i == 0) ? color = OxyColors.Blue : color = OxyColors.Orange;
+                this.plotModel.Series.Clear();
+                color = OxyColors.Green;
 
                 LineSeries lineSeries = new LineSeries();
-                for (int j = 0; j < data.X.Length; j++)
-                    lineSeries.Points.Add(new DataPoint(data.X[j], data.YL[i][j]));
-                lineSeries.Color = color;
-
+                for (int i = 0; i < data.X.Length; i++)
+                    lineSeries.Points.Add(new DataPoint(data.X[i], data.Y[i]));
 
                 lineSeries.MarkerType = MarkerType.Circle;
                 lineSeries.MarkerSize = 4;
+                lineSeries.Color = color;
                 lineSeries.MarkerStroke = color;
                 lineSeries.MarkerFill = color;
-                lineSeries.Title = data.legends[i];
+                lineSeries.Title = data.legends[0];
 
-                Legend legend = new Legend();
                 plotModel.Legends.Add(legend);
                 this.plotModel.Series.Add(lineSeries);
+            }
+            
+            else if(option == "SD")
+            {
+                for (int i = 0; i < data.Splines_Y_List.Count; i++)
+                {
+                    color = i == 0 ? OxyColors.Blue : OxyColors.Orange;
+                    LineSeries SplineSeries = new LineSeries
+                    { InterpolationAlgorithm = InterpolationAlgorithms.CanonicalSpline };
+                    for (int j = 0; j < data.Splines_X.Length; j++)
+                        SplineSeries.Points.Add(new DataPoint(data.Splines_X[j], data.Splines_Y_List[i][j]));
+
+
+                    SplineSeries.MarkerType = MarkerType.Circle;
+                    SplineSeries.MarkerSize = 4;
+                    SplineSeries.Color = color;
+                    SplineSeries.MarkerStroke = color;
+                    SplineSeries.MarkerFill = color;
+                    SplineSeries.Title = data.legends[i+1];
+                    
+                    //plotModel.Legends.Add(legend);
+                    this.plotModel.Series.Add(SplineSeries);
+                }
             }
         }
     }
@@ -142,38 +165,77 @@ namespace WpfApp1
             { return SplinesData.Data.Scope; }
             set
             {
-                SplinesData.Data.Scope = value;
+                SplinesData.Data.Scope[0] = value[0];
+                SplinesData.Data.Scope[1] = value[1];
                 OnPropertyChanged("SplinesData.Data");
             }
         }
-        public ObservableCollection<string> Nodes_and_Values { get; set; }
+        public ObservableCollection<string> MeasuredDataCollection { get; set; }
+        public ObservableCollection<string> SplinesDataCollection { get; set; }
 
         public ViewData(SplinesData sd, SplineParameters sp)
         {
             this.SplinesData = sd;
             this.SplineParameters = sp;
+            this.MeasuredDataCollection = new ObservableCollection<string>();
+            this.SplinesDataCollection = new ObservableCollection<string>();
 
-            this.Nodes_and_Values = new ObservableCollection<string>();
-            Nodes_and_Values.CollectionChanged += Collection_Changed;
+            MeasuredDataCollection.CollectionChanged += MDCollection_Changed;
+            SplinesDataCollection.CollectionChanged += SDCollection_Changed;
         }
 
-        //..........................Коллекция узлов неравномерной сетки и значений функции в них (для вывода в ListBox)
-        public void CreateCollection()
-        {
-            Nodes_and_Values.Clear();
-            for (int i = 0; i < NonUniformNum; i++)
-                Nodes_and_Values.Add("X = " + SplinesData.Data.NodeArray[i].ToString() +
-                                 ";\nY = " + SplinesData.Data.ValueArray[i].ToString());
-        }
-        void Collection_Changed(object? sender, NotifyCollectionChangedEventArgs e)
-        { OnPropertyChanged("Nodes_and_Values"); }
         public void OnPropertyChanged([CallerMemberName] string prop = "")
         {
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(prop));
         }
 
-        //..........................Реализация интерфейса IDataErrorInfo
+        //....................Коллекция узлов неравномерной сетки и значений функции в них (для вывода в ListBox)....................
+        public void CreateMDCollection()
+        {
+            MeasuredDataCollection.Clear();
+            for (int i = 0; i < NonUniformNum; i++)
+                MeasuredDataCollection.Add("x = " + SplinesData.Data.NodeArray[i].ToString() +
+                                 ";\nF(x) = " + SplinesData.Data.ValueArray[i].ToString());
+        }
+        void MDCollection_Changed(object? sender, NotifyCollectionChangedEventArgs e)
+        { OnPropertyChanged("MeasuredDataCollection"); }
+
+        //...........................Коллекция значений сплайнов и первыхпроизводных (для вывода в ListBox)..........................
+        public void CreateSDCollection()
+        {
+            SplinesDataCollection.Clear();
+
+            SplinesDataCollection.Add("Первый набор производных:");
+            SplinesDataCollection.Add("F'(a) = " + SplinesData.Parameters.Derivative1[0].ToString() +
+                                 ";    F'(b) = " + SplinesData.Parameters.Derivative1[1].ToString());
+            SplinesDataCollection.Add("F(a) = " + SplinesData.Spline1ValueArray[0].ToString() +
+                                 ";    F'(a) = " + SplinesData.Spline1DerivativeArray[0].ToString());
+            SplinesDataCollection.Add("F(a+h) = " + SplinesData.Spline1ValueArray[1].ToString() +
+                                 ";    F'(a+h) = " + SplinesData.Spline1DerivativeArray[1].ToString());
+            SplinesDataCollection.Add("F(b-h) = " + SplinesData.Spline1ValueArray[UniformNum-2].ToString() +
+                                 ";    F'(b-h) = " + SplinesData.Spline1DerivativeArray[UniformNum-2].ToString());
+            SplinesDataCollection.Add("F(b) = " + SplinesData.Spline1ValueArray[UniformNum-1].ToString() +
+                                 ";    F'(b) = " + SplinesData.Spline1DerivativeArray[UniformNum-1].ToString());
+
+            SplinesDataCollection.Add("");
+            
+            SplinesDataCollection.Add("Второй набор производных:");
+            SplinesDataCollection.Add("F'(a) = " + SplinesData.Parameters.Derivative2[0].ToString() +
+                                 ";    F'(b) = " + SplinesData.Parameters.Derivative2[1].ToString());
+            SplinesDataCollection.Add("F(a) = " + SplinesData.Spline2ValueArray[0].ToString() +
+                                 ";    F'(a) = " + SplinesData.Spline2DerivativeArray[0].ToString());
+            SplinesDataCollection.Add("F(a+h) = " + SplinesData.Spline2ValueArray[1].ToString() +
+                                 ";    F'(a+h) = " + SplinesData.Spline2DerivativeArray[1].ToString());
+            SplinesDataCollection.Add("F(b-h) = " + SplinesData.Spline2ValueArray[UniformNum - 2].ToString() +
+                                 ";    F'(b-h) = " + SplinesData.Spline2DerivativeArray[UniformNum - 2].ToString());
+            SplinesDataCollection.Add("F(b) = " + SplinesData.Spline2ValueArray[UniformNum - 1].ToString() +
+                                 ";    F'(b) = " + SplinesData.Spline2DerivativeArray[UniformNum - 1].ToString());
+        }
+        void SDCollection_Changed(object? sender, NotifyCollectionChangedEventArgs e)
+        { OnPropertyChanged("SplinesDataCollection"); }
+
+        //........................................Реализация интерфейса IDataErrorInfo...............................................
         public string Error { get; }
         public string this[string PropertyName] { get { return GetValidationError(PropertyName); } }
         private string GetValidationError(string PropertyName)
@@ -201,7 +263,7 @@ namespace WpfApp1
         }
     }
 
- //______________________________________________________ГЛАВНОЕ ОКНО ПРИЛОЖЕНИЯ WPF_______________________________________________________
+    //__________________________________________________ГЛАВНОЕ ОКНО ПРИЛОЖЕНИЯ WPF___________________________________________________
     public partial class MainWindow : Window
     {
         public ViewData ViewData;
@@ -216,13 +278,9 @@ namespace WpfApp1
             SplinesData SplinesData = new SplinesData(MeasuredData, SplineParameters);
             ViewData = new ViewData(SplinesData, SplineParameters);
 
-            //Chart chart = new Chart();
-            //ChartView chartView;
-            //OxyPlotModel oxyPlotModel;
-
             this.DataContext = ViewData;
             SPfBox.ItemsSource = Enum.GetValues(typeof(SPf));
-            Nodes_and_Values_List.ItemsSource = ViewData.Nodes_and_Values;
+            MeasuredDataList.ItemsSource = ViewData.MeasuredDataCollection;
         }
 
         public static RoutedCommand MakeMD = new RoutedCommand("MakeMD", typeof(WpfApp1.MainWindow));
@@ -243,40 +301,43 @@ namespace WpfApp1
         }
         private void MakeMDHandler(object sender, ExecutedRoutedEventArgs e)
         {
-            ViewData.CreateCollection();
+            ViewData.CreateMDCollection();
             chart_data = new Data();
-            chart_data.AddDefaults(ViewData.NonUniformNum, ViewData.SplinesData.Data.NodeArray, ViewData.SplinesData.Data.ValueArray);
-          //this.DataContext = chart_data;
+            chart_data.AddMeasuredData(ViewData.NonUniformNum, ViewData.SplinesData.Data.NodeArray, ViewData.SplinesData.Data.ValueArray);
 
-            ViewData.ChartData = new ChartData(chart_data);
+            ViewData.ChartData = new ChartData();
+            ViewData.ChartData.AddSeries(chart_data, "MD");
             GridOxyPlot.DataContext = ViewData.ChartData;
         }
 
-        public static RoutedCommand MakeSP = new RoutedCommand("MakeSP", typeof(WpfApp1.MainWindow));
-        private void CanMakeSPHandler(object sender, CanExecuteRoutedEventArgs e)
+        public static RoutedCommand MakeSD = new RoutedCommand("MakeSD", typeof(WpfApp1.MainWindow));
+        private void CanMakeSDHandler(object sender, CanExecuteRoutedEventArgs e)
         {
             TextBox ValidationElement = UniformNumBox;
             if (ValidationElement == null)
                 return;
-            if (Validation.GetHasError(ValidationElement) == true || ViewData.Nodes_and_Values.Count == 0)
+            if (Validation.GetHasError(ValidationElement) == true || ViewData.MeasuredDataCollection.Count == 0)
             {
                 e.CanExecute = false;
                 return;
             }
             e.CanExecute = true;
         }
-        private void MakeSPHandler(object sender, ExecutedRoutedEventArgs e)
+        private void MakeSDHandler(object sender, ExecutedRoutedEventArgs e)
         {
+            ViewData.CreateSDCollection();
 
-        }
-
-        private void Splines_Click(object sender, RoutedEventArgs e)
-        {
-
+            if (chart_data.Splines_Y_List.Count == 0)
+            {
+                chart_data.AddSplinesData(ViewData.UniformNum, ViewData.Scope, ViewData.SplinesData.Spline1ValueArray, true);
+                chart_data.AddSplinesData(ViewData.UniformNum, ViewData.Scope, ViewData.SplinesData.Spline2ValueArray, false);
+                ViewData.ChartData.AddSeries(chart_data, "SD");
+            }
+            GridOxyPlot.DataContext = ViewData.ChartData;
         }
     }
 
-    //______________________________________________________________КОНВЕРТЕРЫ________________________________________________________________
+    //__________________________________________________________КОНВЕРТЕРЫ____________________________________________________________
     public class IntConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture)

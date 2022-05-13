@@ -22,23 +22,23 @@
     </Window.Resources>
     <Window.CommandBindings>
         <CommandBinding Command="{x:Static local:MainWindow.MakeMD}" Executed="MakeMDHandler" CanExecute="CanMakeMDHandler"/>
-        <CommandBinding Command="{x:Static local:MainWindow.MakeSP}" Executed="MakeSPHandler" CanExecute="CanMakeSPHandler"/>
+        <CommandBinding Command="{x:Static local:MainWindow.MakeSD}" Executed="MakeSDHandler" CanExecute="CanMakeSDHandler"/>
     </Window.CommandBindings>
     <StackPanel>
         <Menu Height="20">
             <MenuItem Header="Measured Data" Command="{x:Static local:MainWindow.MakeMD}" CommandParameter="From MenuItem"/>
-            <MenuItem Header="Splines" Command="{x:Static local:MainWindow.MakeSP}" CommandParameter="FromMenuItem"/>
+            <MenuItem Header="Splines" Command="{x:Static local:MainWindow.MakeSD}" CommandParameter="FromMenuItem"/>
         </Menu>
         <Grid Height="750" Width="1000">
             <TextBlock x:Name="ChooseYourSPf" Text="Выберите функцию для вычисления измеренных данных" Margin="25,40,725,680" Width="250" Height="30" TextWrapping="Wrap" Grid.ColumnSpan="2"/>
             <ComboBox x:Name="SPfBox" SelectedValue="{Binding SplinesData.Data.Func}" Margin="25,70,725,660" Width="250" Height="20" Grid.ColumnSpan="2"/>
-            <TextBlock x:Name="SPfSelected" Text="{Binding SplinesData.Data.Func, Converter={StaticResource SPfConv}, UpdateSourceTrigger=PropertyChanged}" Margin="25,90,725,615" Width="250" Height="45" TextWrapping="Wrap" Grid.ColumnSpan="2"/>
+            <TextBlock x:Name="SPfSelected" Text="{Binding SplinesData.Data.Func, Converter={StaticResource SPfConv}, UpdateSourceTrigger=PropertyChanged}" Margin="25,90,710,615" Height="45" TextWrapping="Wrap"/>
             <TextBlock x:Name="EnterNonUniformNum" Text="Введите число узлов неравномерной сетки" Width="250" Margin="25,170,725,560" Height="20" Grid.ColumnSpan="2"/>
             <TextBox x:Name="NonUniformNumBox" Text="{Binding NonUniformNum, Converter={StaticResource IntConv}, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Margin="25,190,725,540" Width="250" Height="20" Grid.ColumnSpan="2" />
             <Label Content="{Binding ElementName=NonUniformNumBox, Path=(Validation.Errors).CurrentItem.ErrorContent}" Foreground="Red" Margin="22,205,728,515" Height="30" Width="250" Grid.ColumnSpan="2"/>
-            <TextBlock x:Name="EnterScope" Text="Введите концы отрезка" Width="250" Height="20" Margin="26,260,724,470" Grid.ColumnSpan="2"/>
+            <TextBlock x:Name="EnterScope" Text="Введите концы отрезка [a,b]" Width="250" Height="20" Margin="26,260,724,470" Grid.ColumnSpan="2"/>
             <TextBox x:Name="ScopeBox" Margin="25,280,725,450" Width="250" Height="20" Grid.ColumnSpan="2">
-                <MultiBinding Converter="{StaticResource ScopeConv}" UpdateSourceTrigger="PropertyChanged" ValidatesOnDataErrors="True">
+                <MultiBinding Converter="{StaticResource DerConv}" UpdateSourceTrigger="PropertyChanged" ValidatesOnDataErrors="True">
                     <Binding Path="Scope[0]"/>
                     <Binding Path="Scope[1]"/>
                 </MultiBinding>
@@ -48,7 +48,7 @@
             <TextBox x:Name="UniformNumBox" Text="{Binding UniformNum, Converter={StaticResource IntConv}, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True}" Margin="25,370,725,360" Width="250" Height="20" Grid.ColumnSpan="2"/>
             <Label Content="{Binding ElementName=UniformNumBox, Path=(Validation.Errors).CurrentItem.ErrorContent}" Foreground="Red" Margin="22,385,728,335" Height="30" Width="250" Grid.ColumnSpan="2"/>
             <TextBlock x:Name="EnterDer1" Text="Введите первый набор значений производных на концах отрезка" Margin="25,440,725,280" Width="250" Height="30" TextWrapping="Wrap" Grid.ColumnSpan="2"/>
-            <TextBox x:Name="Der1Box" Margin="25,470,725,260" Width="250" Height="20" Grid.ColumnSpan="2">
+            <TextBox x:Name="Der1Box" Margin="25,470,725,260" Width="250" Height="20">
                 <MultiBinding Converter="{StaticResource DerConv}" UpdateSourceTrigger="PropertyChanged">
                     <Binding Path="SplinesData.Parameters.Derivative1[0]"/>
                     <Binding Path="SplinesData.Parameters.Derivative1[1]"/>
@@ -61,7 +61,8 @@
                     <Binding Path="SplinesData.Parameters.Derivative2[1]"/>
                 </MultiBinding>
             </TextBox>
-            <ListBox x:Name="Nodes_and_Values_List" ItemsSource="{Binding Nodes_and_Values, UpdateSourceTrigger=PropertyChanged}" Margin="300,540,450,60" Height="150" Width="250"/>
+            <ListBox x:Name="MeasuredDataList" ItemsSource="{Binding MeasuredDataCollection, UpdateSourceTrigger=PropertyChanged}" Margin="350,540,400,60" Height="150" Width="250"/>
+            <ListBox x:Name="SplinesDataList" ItemsSource="{Binding SplinesDataCollection, UpdateSourceTrigger=PropertyChanged}"  Margin ="700,540,50,60" Height="150" Width="250"/>
             <Grid Name ="GridOxyPlot" Grid.Column="2">
                 <oxy:PlotView x:Name="plotView" Model="{Binding plotModel}" Margin="300,0,50,210" />
             </Grid>
