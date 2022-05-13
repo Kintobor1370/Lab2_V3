@@ -61,8 +61,8 @@
                     <Binding Path="SplinesData.Parameters.Derivative2[1]"/>
                 </MultiBinding>
             </TextBox>
-            <ListBox x:Name="MeasuredDataList" ItemsSource="{Binding MeasuredDataCollection, UpdateSourceTrigger=PropertyChanged}" Margin="350,540,400,60" Height="150" Width="250"/>
-            <ListBox x:Name="SplinesDataList" ItemsSource="{Binding SplinesDataCollection, UpdateSourceTrigger=PropertyChanged}"  Margin ="700,540,50,60" Height="150" Width="250"/>
+            <ListBox x:Name="MeasuredDataList" ItemsSource="{Binding MeasuredDataCollection, UpdateSourceTrigger=PropertyChanged}" Margin="350,540,350,60" Height="150"/>
+            <ListBox x:Name="SplinesDataList" ItemsSource="{Binding SplinesDataCollection, UpdateSourceTrigger=PropertyChanged}"  Margin ="675,540,25,60" Height="150"/>
             <Grid Name ="GridOxyPlot" Grid.Column="2">
                 <oxy:PlotView x:Name="plotView" Model="{Binding plotModel}" Margin="300,0,50,210" />
             </Grid>
