@@ -133,6 +133,7 @@ namespace WpfApp1
         }
     }
 
+    //______________________________ПРИВЯЗКА ДАННЫХ ОБЪЕКТА SplinesData К ЭЛЕМЕНТАМ УПРАВЛЕНИЯ ПРИЛОЖЕНИЯ_________________________________
     public class ViewData : INotifyPropertyChanged, IDataErrorInfo
     {
         public event PropertyChangedEventHandler PropertyChanged;
@@ -247,10 +248,10 @@ namespace WpfApp1
                     if (NonUniformNum <= 2)
                         err_message = "Число узлов должно быть больше 2";
                     break;
-                case "Scope":
-                    if (Scope[0] >= Scope[1])
-                        err_message = "Левый конец отрезка не может быть больше правого";
-                    break;
+                //case "Scope":
+                    //if (Scope[0] >= Scope[1])
+                        //err_message = "Левый конец отрезка не может быть больше правого";
+                    //break;
                 case "UniformNum":
                     if (UniformNum <= 2)
                         err_message = "Число узлов должно быть больше 2";
@@ -325,6 +326,7 @@ namespace WpfApp1
         }
         private void MakeSDHandler(object sender, ExecutedRoutedEventArgs e)
         {
+            ViewData.SplinesData.BuildSpline();
             ViewData.CreateSDCollection();
 
             if (chart_data.Splines_Y_List.Count == 0)
@@ -395,8 +397,8 @@ namespace WpfApp1
                 double.TryParse(vals[0], out Min);
                 double.TryParse(vals[1], out Max);
 
-                //if (Min > Max)
-                //{ Exception EX = new Exception(); throw (EX); }
+                if (Min >= Max)
+                { Exception EX = new Exception("dddd"); throw (EX); }
 
                 obj[0] = Min;
                 obj[1] = Max;
