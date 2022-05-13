@@ -24,7 +24,7 @@ namespace ClassLibrary1
         {
             get
             {
-                if (!NodeArray_is_Generated)                                                    // Проверка того, что генерация узлов неравномерной сетки еще не произошла
+                if (node_ar == null || node_ar.Length != Num || node_ar[0] != Scope[0] || node_ar[node_ar.Length-1] != Scope[1])
                     RandomNodesGenerate();
                 return node_ar;
             }
@@ -67,9 +67,9 @@ namespace ClassLibrary1
             Scope[0] = min;
             Scope[1] = max;
             Func = f;
+            node_ar = null;
         }
 
-        private bool NodeArray_is_Generated = false;                                       // Проверка того, произошла ли генерация узлов неравномерной сетки (чтобы избежать повторной генерации узлов при обращении к массиву)
         private double[] node_ar { get; set; }                                             // Массив для хранения узлов неравномерной сетки, к которому можно получить доступ только через NodeArray
         void RandomNodesGenerate()                                                         // Генерация узлов неравномерной стеик
         {
@@ -89,7 +89,6 @@ namespace ClassLibrary1
                 node_ar[i] = next_node;
             }
             Array.Sort(node_ar);
-            NodeArray_is_Generated = true;
         }
     }
 
@@ -149,8 +148,8 @@ namespace ClassLibrary1
 
             SplineInterpolationResult1 = new double[Parameters.Num * 2];
             SplineInterpolationResult2 = new double[Parameters.Num * 2];
-            
-            BuildSpline();
+
+            //BuildSpline();
         }
 
         public void BuildSpline()
