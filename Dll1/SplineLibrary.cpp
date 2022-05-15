@@ -21,7 +21,11 @@ void SplineBuild(int nx, int nsites, double* Scope, double* NodeArray, double* V
 
 	int ndorder = 2;
 	int* dorder = new int[ndorder] { 1, 1 };
+	double* res = new double[nsites * ny * ndorder];
 	df_check = dfdInterpolate1D(Task, DF_INTERP, DF_METHOD_PP, nsites, Scope, DF_UNIFORM_PARTITION, ndorder, dorder, NULL, Result, DF_MATRIX_STORAGE_ROWS, NULL);
 
 	df_check = dfDeleteTask(&Task);
+
+	for (int i = 0; i < nsites * ny * ndorder; i++)
+		Result[i] = res[i];
 }
