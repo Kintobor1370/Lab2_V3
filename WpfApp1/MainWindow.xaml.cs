@@ -25,24 +25,22 @@ namespace WpfApp1
         public double[] Splines_X { get; set; }
         public List<double[]> Splines_Y_List { get; set; }
         public List<string> legends { get; set; }
-        public ObservableCollection<string> strList { get; set; }
 
         public Data()
         {
-            strList = new ObservableCollection<string>();
             legends = new List<string>();
             Splines_Y_List = new List<double[]>();
             xTitle = "x";
             yTitle = "F(x)";
         }
 
-        public void AddMeasuredData(int nX, double[] XArray, double[] YArray)                                                             // nX - кол-во точек по оси Х
+        public void AddMeasuredData(int nx, double[] XArray, double[] YArray)                                                             // nX - кол-во точек по оси Х
         {
             try
             {
-                X = new double[nX];
-                Y = new double[nX];
-                for (int i = 0; i < nX; i++)
+                X = new double[nx];
+                Y = new double[nx];
+                for (int i = 0; i < nx; i++)
                 {
                     X[i] = XArray[i];
                     Y[i] = YArray[i];
@@ -50,7 +48,7 @@ namespace WpfApp1
                 legends.Add("Измеренные данные");
             }
             catch (Exception ex)
-            { MessageBox.Show("Ошибка в AddDefaults!\n " + ex.Message); }
+            { MessageBox.Show("Ошибка в AddMeasuredData!\n " + ex.Message); }
         }
 
         public void AddSplinesData(int nx, double[] Scope, double[] YArray, bool first_der_set)
@@ -84,51 +82,48 @@ namespace WpfApp1
             this.plotModel = new PlotModel { Title = "Measured Data & Splines Charts" };
         }
 
-        public void AddSeries(Data data, string option)
+        public void AddDataSeries(Data data)
         {
             Legend legend = new Legend();
             OxyColor color;
-            if(option == "MD")
-            {
-                this.plotModel.Series.Clear();
-                color = OxyColors.Green;
-
-                LineSeries lineSeries = new LineSeries();
-                for (int i = 0; i < data.X.Length; i++)
-                    lineSeries.Points.Add(new DataPoint(data.X[i], data.Y[i]));
-
-                lineSeries.MarkerType = MarkerType.Circle;
-                lineSeries.MarkerSize = 4;
-                lineSeries.Color = color;
-                lineSeries.MarkerStroke = color;
-                lineSeries.MarkerFill = color;
-                lineSeries.Title = data.legends[0];
-
-                plotModel.Legends.Add(legend);
-                this.plotModel.Series.Add(lineSeries);
-            }
             
-            else if(option == "SD")
+            this.plotModel.Series.Clear();
+            color = OxyColors.Green;
+
+            LineSeries lineSeries = new LineSeries();
+            for (int i = 0; i < data.X.Length; i++)
+                lineSeries.Points.Add(new DataPoint(data.X[i], data.Y[i]));
+
+            lineSeries.MarkerType = MarkerType.Circle;
+            lineSeries.MarkerSize = 4;
+            lineSeries.Color = color;
+            lineSeries.MarkerStroke = color;
+            lineSeries.MarkerFill = color;
+            lineSeries.Title = data.legends[0];
+
+            plotModel.Legends.Add(legend);
+            this.plotModel.Series.Add(lineSeries);
+        }
+
+        public void AddSplineSeries(Data data)
+        {
+            OxyColor color;
+            for (int i = 0; i < data.Splines_Y_List.Count; i++)
             {
-                for (int i = 0; i < data.Splines_Y_List.Count; i++)
-                {
-                    color = i == 0 ? OxyColors.Blue : OxyColors.Orange;
-                    LineSeries SplineSeries = new LineSeries
-                    { InterpolationAlgorithm = InterpolationAlgorithms.CanonicalSpline };
-                    for (int j = 0; j < data.Splines_X.Length; j++)
-                        SplineSeries.Points.Add(new DataPoint(data.Splines_X[j], data.Splines_Y_List[i][j]));
+                color = i == 0 ? OxyColors.Blue : OxyColors.Orange;
+                LineSeries SplineSeries = new LineSeries
+                { InterpolationAlgorithm = InterpolationAlgorithms.CanonicalSpline };
+                for (int j = 0; j < data.Splines_X.Length; j++)
+                    SplineSeries.Points.Add(new DataPoint(data.Splines_X[j], data.Splines_Y_List[i][j]));
 
+                SplineSeries.MarkerType = MarkerType.Circle;
+                SplineSeries.MarkerSize = 4;
+                SplineSeries.Color = color;
+                SplineSeries.MarkerStroke = color;
+                SplineSeries.MarkerFill = color;
+                SplineSeries.Title = data.legends[i + 1];
 
-                    SplineSeries.MarkerType = MarkerType.Circle;
-                    SplineSeries.MarkerSize = 4;
-                    SplineSeries.Color = color;
-                    SplineSeries.MarkerStroke = color;
-                    SplineSeries.MarkerFill = color;
-                    SplineSeries.Title = data.legends[i+1];
-                    
-                    //plotModel.Legends.Add(legend);
-                    this.plotModel.Series.Add(SplineSeries);
-                }
+                this.plotModel.Series.Add(SplineSeries);
             }
         }
     }
@@ -176,8 +171,11 @@ namespace WpfApp1
 
         public ViewData(SplinesData sd, SplineParameters sp)
         {
-            this.SplinesData = sd;
-            this.SplineParameters = sp;
+            this.SplinesData = new SplinesData(sd.Data, sd.Parameters);
+            this.SplineParameters = new SplineParameters(sp.Num, sp.Scope[0], sp.Scope[1],
+                                                         sp.Derivative1[0], sp.Derivative1[1],
+                                                         sp.Derivative2[0], sp.Derivative2[1]);
+
             this.MeasuredDataCollection = new ObservableCollection<string>();
             this.SplinesDataCollection = new ObservableCollection<string>();
 
@@ -208,30 +206,24 @@ namespace WpfApp1
             SplinesDataCollection.Clear();
 
             SplinesDataCollection.Add("Первый набор производных:");
-            SplinesDataCollection.Add("F'(a) = " + SplinesData.Parameters.Derivative1[0].ToString() +
-                                 ";    F'(b) = " + SplinesData.Parameters.Derivative1[1].ToString());
-            SplinesDataCollection.Add("F(a) = " + SplinesData.Spline1ValueArray[0].ToString() +
-                                 ";    F'(a) = " + SplinesData.Spline1DerivativeArray[0].ToString());
-            SplinesDataCollection.Add("F(a+h) = " + SplinesData.Spline1ValueArray[1].ToString() +
-                                 ";    F'(a+h) = " + SplinesData.Spline1DerivativeArray[1].ToString());
-            SplinesDataCollection.Add("F(b-h) = " + SplinesData.Spline1ValueArray[UniformNum-2].ToString() +
-                                 ";    F'(b-h) = " + SplinesData.Spline1DerivativeArray[UniformNum-2].ToString());
-            SplinesDataCollection.Add("F(b) = " + SplinesData.Spline1ValueArray[UniformNum-1].ToString() +
-                                 ";    F'(b) = " + SplinesData.Spline1DerivativeArray[UniformNum-1].ToString());
+            SplinesDataCollection.Add($"F'({Scope[0]}) = {SplinesData.Spline1DerivativeArray[0]};    F'({Scope[1]}) = {SplinesData.Spline1DerivativeArray[UniformNum - 1]}");
+            SplinesDataCollection.Add($"F({Scope[0]}) = {SplinesData.Spline1ValueArray[0]};    F'({Scope[0]}) = {SplinesData.Spline1DerivativeArray[0]}");
+            SplinesDataCollection.Add($"F({Scope[0]}+h) = {SplinesData.Spline1ValueArray[1]};    F'({Scope[0]}+h) = {SplinesData.Spline1DerivativeArray[1]}");
+            SplinesDataCollection.Add($"F({Scope[1]}-h) = {SplinesData.Spline1ValueArray[UniformNum - 2]};    F'({Scope[1]}-h) = {SplinesData.Spline1DerivativeArray[UniformNum - 2]}");
+            SplinesDataCollection.Add($"F({Scope[1]}) = {SplinesData.Spline1ValueArray[UniformNum - 1]};    F'({Scope[1]}) = {SplinesData.Spline1DerivativeArray[UniformNum - 1]}");
 
             SplinesDataCollection.Add("");
-            
+
             SplinesDataCollection.Add("Второй набор производных:");
-            SplinesDataCollection.Add("F'(a) = " + SplinesData.Parameters.Derivative2[0].ToString() +
-                                 ";    F'(b) = " + SplinesData.Parameters.Derivative2[1].ToString());
-            SplinesDataCollection.Add("F(a) = " + SplinesData.Spline2ValueArray[0].ToString() +
-                                 ";    F'(a) = " + SplinesData.Spline2DerivativeArray[0].ToString());
-            SplinesDataCollection.Add("F(a+h) = " + SplinesData.Spline2ValueArray[1].ToString() +
-                                 ";    F'(a+h) = " + SplinesData.Spline2DerivativeArray[1].ToString());
-            SplinesDataCollection.Add("F(b-h) = " + SplinesData.Spline2ValueArray[UniformNum - 2].ToString() +
-                                 ";    F'(b-h) = " + SplinesData.Spline2DerivativeArray[UniformNum - 2].ToString());
-            SplinesDataCollection.Add("F(b) = " + SplinesData.Spline2ValueArray[UniformNum - 1].ToString() +
-                                 ";    F'(b) = " + SplinesData.Spline2DerivativeArray[UniformNum - 1].ToString());
+            SplinesDataCollection.Add($"F'({Scope[0]}) = {SplinesData.Spline2DerivativeArray[0]};    F'({Scope[1]}) = {SplinesData.Spline2DerivativeArray[UniformNum - 1]}");
+            SplinesDataCollection.Add($"F({Scope[0]}) = {SplinesData.Spline2ValueArray[0]};    F'({Scope[0]}) = {SplinesData.Spline2DerivativeArray[0]}");
+            SplinesDataCollection.Add($"F({Scope[0]}+h) = {SplinesData.Spline2ValueArray[1]};    F'({Scope[0]}+h) = {SplinesData.Spline2DerivativeArray[1]}");
+            SplinesDataCollection.Add($"F({Scope[1]}-h) = {SplinesData.Spline2ValueArray[UniformNum - 2]};    F'({Scope[1]}-h) = {SplinesData.Spline2DerivativeArray[UniformNum - 2]}");
+            SplinesDataCollection.Add($"F({Scope[1]}) = {SplinesData.Spline2ValueArray[UniformNum - 1]};    F'({Scope[1]}) = {SplinesData.Spline2DerivativeArray[UniformNum - 1]}");
+
+            SplinesDataCollection.Add("");
+
+            SplinesDataCollection.Add($"где h = {(Scope[1] - Scope[0]) / (UniformNum - 1)}");
         }
         void SDCollection_Changed(object? sender, NotifyCollectionChangedEventArgs e)
         { OnPropertyChanged("SplinesDataCollection"); }
@@ -307,7 +299,7 @@ namespace WpfApp1
             chart_data.AddMeasuredData(ViewData.NonUniformNum, ViewData.SplinesData.Data.NodeArray, ViewData.SplinesData.Data.ValueArray);
 
             ViewData.ChartData = new ChartData();
-            ViewData.ChartData.AddSeries(chart_data, "MD");
+            ViewData.ChartData.AddDataSeries(chart_data);
             GridOxyPlot.DataContext = ViewData.ChartData;
         }
 
@@ -333,7 +325,7 @@ namespace WpfApp1
             {
                 chart_data.AddSplinesData(ViewData.UniformNum, ViewData.Scope, ViewData.SplinesData.Spline1ValueArray, true);
                 chart_data.AddSplinesData(ViewData.UniformNum, ViewData.Scope, ViewData.SplinesData.Spline2ValueArray, false);
-                ViewData.ChartData.AddSeries(chart_data, "SD");
+                ViewData.ChartData.AddSplineSeries(chart_data);
             }
             GridOxyPlot.DataContext = ViewData.ChartData;
         }
