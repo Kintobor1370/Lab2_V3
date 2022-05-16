@@ -328,6 +328,8 @@ namespace WpfApp1
                 ViewData.ChartData.AddSplineSeries(chart_data);
             }
             GridOxyPlot.DataContext = ViewData.ChartData;
+            
+            Data_Spline_Plot.InvalidatePlot(true);
         }
     }
 
