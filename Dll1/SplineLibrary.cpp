@@ -15,7 +15,7 @@ void SplineBuild(int nx, int nsites, double* Scope, double* NodeArray, double* V
 	df_check = dfdNewTask1D(&Task, nx, NodeArray, DF_NON_UNIFORM_PARTITION, ny, ValueArray, DF_MATRIX_STORAGE_ROWS);
 
 	double* scoeff = new double[ny * DF_PP_CUBIC * (nx - 1)];
-	df_check = dfdEditPPSpline1D(Task, DF_PP_CUBIC, DF_PP_NATURAL, DF_BC_1ST_LEFT_DER | DF_BC_1ST_RIGHT_DER, Der, DF_NO_IC, NULL, scoeff, DF_NO_HINT); // Ã§Ã¤Ã¥Ã±Ã¼
+	df_check = dfdEditPPSpline1D(Task, DF_PP_CUBIC, DF_PP_NATURAL, DF_BC_1ST_LEFT_DER | DF_BC_1ST_RIGHT_DER, Der, DF_NO_IC, NULL, scoeff, DF_NO_HINT); // çäåñü
 
 	df_check = dfdConstruct1D(Task, DF_PP_SPLINE, DF_METHOD_STD);
 
