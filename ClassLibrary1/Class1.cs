@@ -131,7 +131,7 @@ namespace ClassLibrary1
     //_____________________________________________________ДАННЫЕ СПЛАЙНОВ___________________________________________________________
     public class SplinesData
     {
-        [DllImport("C:\\Users\\User\\Desktop\\prog\\C#\\Sem6\\Lab2_V3\\x64\\Debug\\Dll1.dll")]  // !! Надо изменить абсолютный путь!!
+        [DllImport("..\\..\\..\\..\\x64\\Debug\\Dll1.dll")]
         static extern void SplineBuild(int nx, int nsites, double[] Scope, double[] NodeArray, double[] ValueArray, double[] Der, double[] Result);
         public MeasuredData Data { get; set; }
         public SplineParameters Parameters { get; set; }
