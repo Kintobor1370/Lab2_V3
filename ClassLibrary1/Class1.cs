@@ -111,7 +111,7 @@ namespace ClassLibrary1
         public double[] Derivative1 { get; set; }                                               // Значения первой производной на концах отрезка для 1-го сплайна
         public double[] Derivative2 { get; set; }                                               // Значения первой производной на концах отрезка для 2-го сплайна
 
-        public SplineParameters(int n = 2, double min = 0, double max = 1, double d1_left = 1, double d1_right = 1, double d2_left = 0, double d2_right = 0)
+        public SplineParameters(int n = 2, double min = 0, double max = 0, double d1_left = 1, double d1_right = 1, double d2_left = 0, double d2_right = 0)
         {
             Num = n;
             Scope = new double[2];
@@ -131,7 +131,7 @@ namespace ClassLibrary1
     //_____________________________________________________ДАННЫЕ СПЛАЙНОВ___________________________________________________________
     public class SplinesData
     {
-        [DllImport("C:\\Users\\User\\Desktop\\prog\\C#\\Sem6\\Lab2_V3\\x64\\Debug\\Dll1.dll")]  // !!Надо изменить абсолютный путь!!
+        [DllImport("C:\\Users\\User\\Desktop\\prog\\C#\\Sem6\\Lab2_V3\\x64\\Debug\\Dll1.dll")]  // !! Надо изменить абсолютный путь!!
         static extern void SplineBuild(int nx, int nsites, double[] Scope, double[] NodeArray, double[] ValueArray, double[] Der, double[] Result);
         public MeasuredData Data { get; set; }
         public SplineParameters Parameters { get; set; }
@@ -145,19 +145,22 @@ namespace ClassLibrary1
             Parameters = new SplineParameters(sp.Num, sp.Scope[0], sp.Scope[1],
                                               sp.Derivative1[0], sp.Derivative1[1],
                                               sp.Derivative2[0], sp.Derivative2[1]);
-
-            SplineInterpolationResult1 = new double[Parameters.Num * 2];
-            SplineInterpolationResult2 = new double[Parameters.Num * 2];
-
-            //BuildSpline();
         }
 
         public void BuildSpline()
         {
-            SplineBuild(Data.Num, Parameters.Num, Data.Scope, Data.NodeArray, Data.ValueArray,
-                        Parameters.Derivative1, SplineInterpolationResult1);
-            SplineBuild(Data.Num, Parameters.Num, Data.Scope, Data.NodeArray, Data.ValueArray,
-                        Parameters.Derivative2, SplineInterpolationResult2);
+            try
+            {
+                SplineInterpolationResult1 = new double[Parameters.Num * 2];
+                SplineInterpolationResult2 = new double[Parameters.Num * 2];
+
+                SplineBuild(Data.Num, Parameters.Num, Data.Scope, Data.NodeArray, Data.ValueArray,
+                            Parameters.Derivative1, SplineInterpolationResult1);
+                SplineBuild(Data.Num, Parameters.Num, Data.Scope, Data.NodeArray, Data.ValueArray,
+                            Parameters.Derivative2, SplineInterpolationResult2);
+            }
+            catch (Exception ex)
+            { throw new Exception("Error in SplinesData.BuildSpline()", ex); }
         }
 
         public double[] Spline1ValueArray
